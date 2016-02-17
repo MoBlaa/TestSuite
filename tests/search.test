@@ -1,0 +1,77 @@
+<"src\edu\kit\informatik\tests\test.graph">
+#Errors
+00err : "search "
+00err : "search null;null;null"
+00err : "search null;null;null;null"
+00err : "search null;null;time"
+00err : "search null;null;route"
+00err : "search null;null;optimal"
+00err : "search ceee;deeee;optimal;"
+
+#Aa to all others
+00err : "search Aa;Aa;time"
+00err : "search Aa;Aa;route"
+00err : "search Aa;Aa;optimal"
+
+3 : "search Aa;bB;time"
+1 : "search Aa;bB;route"
+10 : "search Aa;bB;optimal"
+
+4 : "search Aa;C;time"
+2 : "search Aa;C;route"
+20 : "search Aa;C;optimal"
+
+5 : "search Aa;d;time"
+5 : "search Aa;d;route"
+50 : "search Aa;d;optimal"
+
+#bB to all others
+00err : "search bB;bB;time"
+00err : "search bB;bB;route"
+00err : "search bB;bB;optimal"
+
+3 : "search bB;Aa;time"
+1 : "search bB;Aa;route"
+10 : "search bB;Aa;optimal"
+
+2 : "search bB;C;time"
+3 : "search bB;C;route"
+29 : "search bB;C;optimal"
+
+3 : "search bB;d;time"
+6 : "search bB;d;route"
+73 : "search bB;d;optimal"
+
+#C to all others
+00err : "search C;C;time"
+00err : "search C;C;route"
+00err : "search C;C;optimal"
+
+4 : "search C;Aa;time"
+2 : "search C;Aa;route"
+20 : "search C;Aa;optimal"
+
+2 : "search C;bB;time"
+3 : "search C;bB;route"
+29 : "search C;bB;optimal"
+
+1 : "search C;d;time"
+3 : "search C;d;route"
+10 : "search C;d;optimal"
+
+#d to all others
+00err : "search d;d;time"
+00err : "search d;d;route"
+00err : "search d;d;optimal"
+
+5 : "search d;Aa;time"
+5 : "search d;Aa;route"
+50 : "search d;Aa;optimal"
+
+3 : "search d;bB;time"
+6 : "search d;bB;route"
+73 : "search d;bB;optimal"
+
+1 : "search d;C;time"
+3 : "search d;C;route"
+10 : "search d;C;optimal"

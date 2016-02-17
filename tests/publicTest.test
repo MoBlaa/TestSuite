@@ -1,0 +1,9 @@
+<"src\edu\kit\informatik\tests\test.graph">
+6 : "search bB;d;route"
+"bB Aa C d" : "route bB;d;route"
+"bB Aa C d
+bB Aa d
+bB C Aa d
+bB C d" : "route bB;d;all"
+"C
+Aa" : "nodes bB"
