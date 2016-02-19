@@ -1,0 +1,120 @@
+<"src\edu\kit\informatik\tests\test.graph">
+#72 Testcases
+#Errors
+00err : "route "
+00err : "route null;null;null"
+00err : "route null;null;null;null"
+00err : "route null;null;time"
+00err : "route null;null;route"
+00err : "route null;null;optimal"
+00err : "route ceee;deeee;optimal;"
+
+#Aa to all others
+"Aa" : "route Aa;Aa;time"
+"Aa" : "route Aa;Aa;route"
+"Aa" : "route Aa;Aa;optimal"
+"Aa" : "route Aa;Aa;all"
+
+"Aa bB" : "route Aa;bB;time"
+"Aa bB" : "route Aa;bB;route"
+"Aa bB" : "route Aa;bB;optimal"
+"Aa bB
+Aa C bB
+Aa d C bB" : "route Aa;bB;all"
+
+"Aa C" : "route Aa;C;time"
+"Aa C" : "route Aa;C;route"
+"Aa C" : "route Aa;C;optimal"
+"Aa bB C
+Aa C
+Aa d C" : "route Aa;C;all"
+
+"Aa C d" : "route Aa;d;time"
+"Aa C d" : "route Aa;d;route"
+"Aa C d" : "route Aa;d;optimal"
+"Aa bB C d
+Aa C d
+Aa d" : "route Aa;d;all"
+
+#bB to all others
+"bB" : "route bB;bB;time"
+"bB" : "route bB;bB;route"
+"bB" : "route bB;bB;optimal"
+"bB" : "route bB;bB;all"
+
+"bB Aa" : "route bB;Aa;time"
+"bB Aa" : "route bB;Aa;route"
+"bB Aa" : "route bB;Aa;optimal"
+"bB Aa
+bB C Aa
+bB C d Aa" : "route bB;Aa;all"
+
+"bB C" : "route bB;C;time"
+"bB Aa C" : "route bB;C;route"
+"bB C" : "route bB;C;optimal"
+"bB Aa C
+bB Aa d C
+bB C" : "route bB;C;all"
+
+"bB C d" : "route bB;d;time"
+"bB Aa C d" : "route bB;d;route"
+"bB C d" : "route bB;d;optimal"
+"bB Aa C d
+bB Aa d
+bB C Aa d
+bB C d" : "route bB;d;all"
+
+#C to all others
+"C" : "route C;C;time"
+"C" : "route C;C;route"
+"C" : "route C;C;optimal"
+"C" : "route C;C;all"
+
+"C Aa" : "route C;Aa;time"
+"C Aa" : "route C;Aa;route"
+"C Aa" : "route C;Aa;optimal"
+"C Aa
+C bB Aa
+C d Aa" : "route C;Aa;all"
+
+"C bB" : "route C;bB;time"
+"C Aa bB" : "route C;bB;route"
+"C bB" : "route C;bB;optimal"
+"C Aa bB
+C bB
+C d Aa bB" : "route C;bB;all"
+
+"C d" : "route C;d;time"
+"C d" : "route C;d;route"
+"C d" : "route C;d;optimal"
+"C Aa d
+C bB Aa d
+C d" : "route C;d;all"
+
+#d to all others
+"d" : "route d;d;time"
+"d" : "route d;d;route"
+"d" : "route d;d;optimal"
+"d" : "route d;d;all"
+
+"d C Aa" : "route d;Aa;time"
+"d C Aa" : "route d;Aa;route"
+"d C Aa" : "route d;Aa;optimal"
+"d Aa
+d C Aa
+d C bB Aa" : "route d;Aa;all"
+
+"d C bB" : "route d;bB;time"
+"d C Aa bB" : "route d;bB;route"
+"d C bB" : "route d;bB;optimal"
+"d Aa bB
+d Aa C bB
+d C Aa bB
+d C bB" : "route d;bB;all"
+
+"d C" : "route d;C;time"
+"d C" : "route d;C;route"
+"d C" : "route d;C;optimal"
+"d Aa bB C
+d Aa C
+d C" : "route d;C;all"

@@ -1,4 +1,5 @@
 <"src\edu\kit\informatik\tests\test.graph">
+#55 Testcases
 #Errors
 00err : "search "
 00err : "search null;null;null"
@@ -9,9 +10,9 @@
 00err : "search ceee;deeee;optimal;"
 
 #Aa to all others
-00err : "search Aa;Aa;time"
-00err : "search Aa;Aa;route"
-00err : "search Aa;Aa;optimal"
+0 : "search Aa;Aa;time"
+0 : "search Aa;Aa;route"
+0 : "search Aa;Aa;optimal"
 
 3 : "search Aa;bB;time"
 1 : "search Aa;bB;route"
@@ -26,9 +27,9 @@
 50 : "search Aa;d;optimal"
 
 #bB to all others
-00err : "search bB;bB;time"
-00err : "search bB;bB;route"
-00err : "search bB;bB;optimal"
+0 : "search bB;bB;time"
+0 : "search bB;bB;route"
+0 : "search bB;bB;optimal"
 
 3 : "search bB;Aa;time"
 1 : "search bB;Aa;route"
@@ -43,9 +44,9 @@
 73 : "search bB;d;optimal"
 
 #C to all others
-00err : "search C;C;time"
-00err : "search C;C;route"
-00err : "search C;C;optimal"
+0 : "search C;C;time"
+0 : "search C;C;route"
+0 : "search C;C;optimal"
 
 4 : "search C;Aa;time"
 2 : "search C;Aa;route"
@@ -60,9 +61,9 @@
 10 : "search C;d;optimal"
 
 #d to all others
-00err : "search d;d;time"
-00err : "search d;d;route"
-00err : "search d;d;optimal"
+0 : "search d;d;time"
+0 : "search d;d;route"
+0 : "search d;d;optimal"
 
 5 : "search d;Aa;time"
 5 : "search d;Aa;route"

@@ -1,0 +1,11 @@
+logs/
+/../logs/
+src/edu/kit/informatik/*.java
+src/edu/kit/informatik/cmds
+src/edu/kit/informatik/data
+src/edu/kit/informatik/utility
+src/edu/kit/informatik/tests/*.java
+out/
+lib/
+.idea/
+*.iml
