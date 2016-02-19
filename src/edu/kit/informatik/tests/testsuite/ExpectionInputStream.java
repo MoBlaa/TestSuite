@@ -22,7 +22,7 @@ public class ExpectionInputStream extends PipedInputStream {
     /**
      * Initialises a new InputStream.
      *
-     * @param ins     Lines the stream expects.
+     * @param ins Lines the stream expects.
      */
     public ExpectionInputStream(List<?> ins) {
         super();
@@ -62,7 +62,12 @@ public class ExpectionInputStream extends PipedInputStream {
     @Override
     public int read(byte[] b, int off, int len) throws IOException {
         int result = -1;
-        if (expecting) {
+        if (inputs.size() == count) {
+            byte[] by = ("quit" + System.lineSeparator()).getBytes();
+            System.arraycopy(by, 0, b, 0, by.length);
+            result = by.length;
+            expecting = false;
+        } else if (expecting) {
             if (inputs.size() > count) {
                 char[] ch = new char[b.length];
                 StringReader reader = new StringReader(inputs.get(count).toString()
@@ -74,11 +79,6 @@ public class ExpectionInputStream extends PipedInputStream {
                     b[i] = (byte) ch[i];
                 }
                 count++;
-                expecting = false;
-            } else if (inputs.size() == count) {
-                byte[] by = ("quit" + System.lineSeparator()).getBytes();
-                System.arraycopy(by, 0, b, 0, by.length);
-                result = by.length;
                 expecting = false;
             } else {
                 System.err.println(TestSuite.ERR_PREF + "End of expectations reached!");

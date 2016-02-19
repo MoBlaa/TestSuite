@@ -1,0 +1,15 @@
+<"src\edu\kit\informatik\tests\test.graph">
+#init
+#Errors
+00err : "remove "
+00err : "remove null;"
+00err : "remove null;null;null"
+00err : "remove ;"
+
+"OK" : "remove C;d"
+"OK" : "remove bB;C"
+"OK" : "remove d;aa"
+"OK" : "remove aa;c"
+"OK" : "remove aa;bb"
+"
+" : "info"

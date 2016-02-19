@@ -60,8 +60,6 @@ public final class TestSuite {
     private static ExpectionInputStream sysIn;
     private static ExpectionOutputStream sysOut;
 
-    private static File logFile;
-
     private TestSuite() {
     }
 
@@ -232,13 +230,13 @@ public final class TestSuite {
                     while (reader.ready()) {
                         String nLine = reader.readLine();
                         if (nLine != null) {
-                            if (nLine.matches("\"[\\w\\s]+") && reader.ready()) {
+                            if (nLine.matches("\"[\\w\\s]*") && reader.ready()) {
                                 String next;
                                 boolean cont = true;
                                 while (cont) {
                                     next = reader.readLine();
                                     nLine += "\n" + next;
-                                    if (next.matches("[\\w\\s]+\"\\s:\\s\"[\\w\\s;]+\"")) {
+                                    if (next.matches("[\\w\\s]*\"\\s:\\s\"[\\w\\s;]+\"")) {
                                         cont = false;
                                     } else if (!reader.ready()) {
                                         nLine = "";

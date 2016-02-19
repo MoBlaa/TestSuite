@@ -45,7 +45,7 @@ public class ExpectionOutputStream extends PipedOutputStream {
             }
         } else {
             if (!logFile.getParentFile().exists()) {
-                if (logFile.mkdirs()){
+                if (logFile.mkdirs()) {
                     throw new IOException("Deleting previous file failed!");
                 }
             }
@@ -109,7 +109,15 @@ public class ExpectionOutputStream extends PipedOutputStream {
         String out = new String(Arrays.copyOfRange(b, off, len)).replace(System.lineSeparator(), "\n");
         if (out.startsWith(TestSuite.ERR_PREF) || out.startsWith(TestSuite.DEF_PREF) || out.matches("\n")) {
             if (out.matches("\n")) {
-                if (newLineAllowed || !this.isExpecting()) {
+                if (this.isExpecting()
+                        && this.expectations.get(count).toString().replace(System.lineSeparator(), "\n").equals(out)) {
+                    this.log.print(out);
+                    this.log.flush();
+
+                    count++;
+                    newLineAllowed = true;
+                    this.in.setExpecting(true);
+                } else if (newLineAllowed || !this.isExpecting()) {
                     this.log.print(out);
                     this.log.flush();
                 } else {
