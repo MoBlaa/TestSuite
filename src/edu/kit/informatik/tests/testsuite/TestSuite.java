@@ -41,20 +41,25 @@ public final class TestSuite {
     public static final String DEF_PREF = "Test: ";
 
     /**
-     * Relative directory path to test sources.
-     * Located in the project root, because test sources
-     * shouldn't be located inside the src-Folder.
+     * Relative directory path to test sources. Located in the project root,
+     * because test sources shouldn't be located inside the src-Folder.
      */
-    private static final String LOAD_DIRECTORY = "tests";
-
-    private static final String LINE_REGEX
-            = "(null|00err|true|false|\"[\\w\\s]*\"|-?[\\d]+|-?[\\d]+\\.[\\d]+)\\s:\\s\"([\\w\\s;]+)\"";
+    public static final String LOAD_DIRECTORY = "E:\\Google Drive\\Eclipse\\workspace\\Final01\\tests";
+    /**
+     * Class to test.
+     */
+    public static final String LOAD_CLASS = "Main";
+    private static final String PARAM_REGEX = "(!C)?";
+    private static final String LINE_REGEX = PARAM_REGEX + "(\\s)*"
+            + "(null|00err|true|false|\"[\\w\\s]+\"|-?[\\d]+|-?[\\d]+\\.[\\d]+)\\s:\\s\"([\\w\\s;]+)\"";
     private static final String CMD_LINE_ARGS_REGEX = "\"[\\w\\\\/:_\\-\\.]+\"(;\"[\\w\\\\/:_\\-\\.]+\")*";
 
     private static final String CMD_LINE_ARGS = "$CMD_LINE_ARGS$";
 
     private static ExpectionInputStream sysIn;
     private static ExpectionOutputStream sysOut;
+
+    private static File logFile;
 
     private TestSuite() {
     }
@@ -63,7 +68,8 @@ public final class TestSuite {
      * Test main to perform the tests located at $ProjectRoot/tests and named
      * *.test.
      *
-     * @param args Command line arguments.
+     * @param args
+     *            Command line arguments.
      */
     public static void main(final String... args) {
         // Init
@@ -83,15 +89,14 @@ public final class TestSuite {
                 }
             }
         }
-        System.out.print("Name of Test-class inside same package: ");
-
         Class<?> cl = null;
         {
-            String sClassName;
+            String sClassName = LOAD_CLASS;
             while (cl == null) {
-                // if (sClassName.equals("")) {
-                sClassName = scan.nextLine();
-                // }
+                if (sClassName.equals("")) {
+                    System.out.print("Name of Test-class inside same package: ");
+                    sClassName = scan.nextLine();
+                }
                 try {
                     cl = TestSuite.class.getClassLoader().loadClass("edu.kit.informatik." + sClassName);
                     if (cl == null) {
@@ -102,13 +107,16 @@ public final class TestSuite {
                 } catch (final ClassNotFoundException e) {
                     System.err.println(ERR_PREF + "Class " + sClassName + " doesn't exist in this package!");
                     cl = null;
+                    sClassName = "";
                 } catch (final NoSuchMethodException ex) {
                     System.err.println(ERR_PREF + "Class " + sClassName + " doesn't have a static main function or "
                             + "default contructor!");
                     cl = null;
+                    sClassName = "";
                 } catch (final NoClassDefFoundError exx) {
                     System.err.println(ERR_PREF + exx.getMessage());
                     cl = null;
+                    sClassName = "";
                 }
             }
         }
@@ -141,9 +149,12 @@ public final class TestSuite {
     /**
      * Performs the tests one file is representing.
      *
-     * @param testClass Class to be tested.
-     * @param cas       Assertions with in and output expected.
-     * @param logFile   File to store the output of this test.
+     * @param testClass
+     *            Class to be tested.
+     * @param cas
+     *            Assertions with in and output expected.
+     * @param logFile
+     *            File to store the output of this test.
      */
     public static void testFile(final Class<?> testClass, final Map<String, ?> cas, final File logFile) {
         if (!cas.isEmpty()) {
@@ -226,13 +237,14 @@ public final class TestSuite {
                     while (reader.ready()) {
                         String nLine = reader.readLine();
                         if (nLine != null) {
-                            if (nLine.matches("\"[\\w\\s]*") && reader.ready()) {
+                            // if output is multiple lines long
+                            if (nLine.matches(PARAM_REGEX + "\"[\\w\\s]+") && reader.ready()) {
                                 String next;
                                 boolean cont = true;
                                 while (cont) {
                                     next = reader.readLine();
                                     nLine += "\n" + next;
-                                    if (next.matches("[\\w\\s]*\"\\s:\\s\"[\\w\\s;]+\"")) {
+                                    if (next.matches("[\\w\\s]+\"\\s:\\s\"[\\w\\s;]+\"")) {
                                         cont = false;
                                     } else if (!reader.ready()) {
                                         nLine = "";
