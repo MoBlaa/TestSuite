@@ -1,0 +1,4 @@
+<"tests\test.graph">
+"OK" : "remove Aa;C"
+"OK" : "remove Aa;d"
+00err : "remove bB;C"

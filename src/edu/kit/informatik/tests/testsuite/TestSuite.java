@@ -45,14 +45,10 @@ public final class TestSuite {
      * Located in the project root, because test sources
      * shouldn't be located inside the src-Folder.
      */
-    public static final String LOAD_DIRECTORY = "tests";
-    /**
-     * Class to test.
-     */
-    public static final String LOAD_CLASS = "";
+    private static final String LOAD_DIRECTORY = "tests";
 
     private static final String LINE_REGEX
-            = "(null|00err|true|false|\"[\\w\\s]+\"|-?[\\d]+|-?[\\d]+\\.[\\d]+)\\s:\\s\"([\\w\\s;]+)\"";
+            = "(null|00err|true|false|\"[\\w\\s]*\"|-?[\\d]+|-?[\\d]+\\.[\\d]+)\\s:\\s\"([\\w\\s;]+)\"";
     private static final String CMD_LINE_ARGS_REGEX = "\"[\\w\\\\/:_\\-\\.]+\"(;\"[\\w\\\\/:_\\-\\.]+\")*";
 
     private static final String CMD_LINE_ARGS = "$CMD_LINE_ARGS$";

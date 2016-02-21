@@ -7,4 +7,8 @@
 00err : "insert null;null;null;null;null;null"
 00err : "insert Aa;EE;Cee;1"
 00err : "insert Aa;EE;1;dee"
-00err : "insert Aa;ee;1;10"
+
+#Works
+"OK" : "insert Aa;ee;1;10"
+"OK" : "insert bB;d;2;5"
+00err : "insert Aa;bb;10;5"

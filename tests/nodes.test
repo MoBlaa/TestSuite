@@ -1,0 +1,18 @@
+<"tests\test.graph">
+#Errors
+00err : "nodes "
+00err : "nodes null"
+00err : "nodes ;;"
+00err : "nodes e"
+
+#Nodes of all
+"d
+C
+bB" : "nodes Aa"
+"d
+bB
+Aa" : "nodes C"
+"C
+Aa" : "nodes d"
+"C
+Aa" : "nodes bB"

@@ -1,0 +1,8 @@
+<"src\edu\kit\informatik\tests\test.graph">
+"OK" : "remove C;bB"
+"OK" : "remove C;d"
+"OK" : "remove Aa;d"
+"OK" : "remove Aa;bB"
+"OK" : "remove Aa;C"
+"
+" : "info"
