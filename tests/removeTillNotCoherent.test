@@ -1,6 +1,6 @@
 <"tests\test.graph">
 "OK" : "remove bB;C"
-"OK" : "remove C;d"
+"!Cok" : "remove C;d"
 "OK" : "remove Aa;d"
 "OK" : "remove Aa;C"
 "OK" : "remove Aa;bB"

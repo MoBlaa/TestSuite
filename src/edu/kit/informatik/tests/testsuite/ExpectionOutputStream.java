@@ -126,7 +126,7 @@ public class ExpectionOutputStream extends PipedOutputStream {
                 }
                 //Others are not supported
             }
-            if ((sRep.equals(out) || ignoreEquals) || (sRep.equals("00err") && out.startsWith("Error"))
+            if (sRep.equals(out) || ignoreEquals || (sRep.equals("00err") && out.startsWith("Error"))
                     || (out.replace(System.lineSeparator(), "\n").equals(sRep))) {
                 this.log.print(out);
 

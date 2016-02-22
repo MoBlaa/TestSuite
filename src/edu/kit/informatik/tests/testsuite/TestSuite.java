@@ -44,10 +44,11 @@ public final class TestSuite {
      */
     public static final String DEF_PREF = "Test: ";
 
-    private static final String PARAM_REGEX = "(!C)?";
+    private static final String PARAM_REGEX = "(?:!C)?";
 
     private static final String LINE_REGEX
-            = PARAM_REGEX + "(null|00err|true|false|\"[\\w\\s]*\"|-?[\\d]+|-?[\\d]+\\.[\\d]+)\\s:\\s\"([\\w\\s;]+)\"";
+            = "(null|00err|true|false|\"" + PARAM_REGEX
+            + "[\\w\\s]*\"|-?[\\d]+|-?[\\d]+\\.[\\d]+)\\s:\\s\"([\\w\\s;]+)\"";
     private static final String CMD_LINE_ARGS_REGEX = "\"[\\w\\\\/:_\\-\\.]+\"(;\"[\\w\\\\/:_\\-\\.]+\")*";
 
     private static final String CMD_LINE_ARGS = "$CMD_LINE_ARGS$";
@@ -293,12 +294,11 @@ public final class TestSuite {
                         final Matcher match = pat.matcher(line);
                         if (match.matches() && (match.groupCount() == 2 || match.groupCount() == 3)) {
                             /*
-                            group(1) == Parameters
-                            group(2) == expected output
-                            group(3) == input
+                            group(1) == expected output
+                            group(2) == input
                              */
-                            final String expected = match.group(2);
-                            final String input = match.group(3);
+                            final String expected = match.group(1);
+                            final String input = match.group(2);
 
                             cases.put(input, expected.replace("\"", ""));
                         }
