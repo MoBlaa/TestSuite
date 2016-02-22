@@ -1,4 +1,8 @@
 <"tests\test.graph">
-"OK" : "remove Aa;C"
+"OK" : "remove bB;C"
+"OK" : "remove C;d"
 "OK" : "remove Aa;d"
-00err : "remove bB;C"
+"OK" : "remove Aa;C"
+"OK" : "remove Aa;bB"
+00err : "nodes Aa"
+00err : "insert Aa;ee;10;5"

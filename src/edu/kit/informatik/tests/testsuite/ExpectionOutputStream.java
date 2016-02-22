@@ -30,14 +30,10 @@ public class ExpectionOutputStream extends PipedOutputStream {
     /**
      * Initialises a PipedStream with a list of expected inputs.
      *
-     * @param expected
-     *            Expected lines to print.
-     * @param str
-     *            Next OutputStream.
-     * @param logFile
-     *            File to save the output in.
-     * @throws IOException
-     *             Will be thrown if initialisation of logwriter went wrong.
+     * @param expected Expected lines to print.
+     * @param str      Next OutputStream.
+     * @param logFile  File to save the output in.
+     * @throws IOException Will be thrown if initialisation of logwriter went wrong.
      */
     public ExpectionOutputStream(final List<?> expected, final OutputStream str, final File logFile)
             throws IOException {
@@ -84,7 +80,7 @@ public class ExpectionOutputStream extends PipedOutputStream {
      * Getter of property, if this Stream still expects.
      *
      * @return true, if count of already printed outputs is smaller then the
-     *         size of the expected lines, false otherwise.
+     * size of the expected lines, false otherwise.
      */
     public boolean isExpecting() {
         return count < this.expectations.size();
@@ -112,58 +108,45 @@ public class ExpectionOutputStream extends PipedOutputStream {
 
     @Override
     public void write(final byte[] b, final int off, final int len) throws IOException {
-        final String out = new String(Arrays.copyOfRange(b, off, len)).replace(System.lineSeparator(), "\n");
-        if (out.startsWith(TestSuite.ERR_PREF) || out.startsWith(TestSuite.DEF_PREF) || out.matches("\n")) {
-            if (out.matches("\n")) {
-                if (this.isExpecting()
-                        && this.expectations.get(count).toString().replace(System.lineSeparator(), "\n").equals(out)) {
-                    this.log.print(out);
-                    this.log.flush();
-
-                    count++;
-                    newLineAllowed = true;
-                    this.in.setExpecting(true);
-                } else if (newLineAllowed || !this.isExpecting()) {
-                    this.log.print(out);
-                    this.log.flush();
-                } else {
-                    System.err.println(TestSuite.ERR_PREF + ": expected: " + this.expectations.get(count).toString()
-                            + " but got new line!");
+        final String out = new String(Arrays.copyOfRange(b, off, len));
+        if (out.startsWith(TestSuite.ERR_PREF) || out.startsWith(TestSuite.DEF_PREF)
+                || (out.matches(System.lineSeparator()) && newLineAllowed)) {
+            this.log.print(out);
+            newLineAllowed = false;
+        } else if (this.isExpecting()) {
+            String sRep = expectations.get(count).toString();
+            // Get options
+            boolean ignoreEquals = false;
+            if (sRep.startsWith("!")) {
+                sRep = sRep.replaceFirst("!", "");
+                // Ignore case
+                if (sRep.startsWith("C")) {
+                    sRep = sRep.replaceFirst("C", "");
+                    ignoreEquals = sRep.equalsIgnoreCase(out);
                 }
-            } else {
+                //Others are not supported
+            }
+            if ((sRep.equals(out) || ignoreEquals) || (sRep.equals("00err") && out.startsWith("Error"))
+                    || (out.replace(System.lineSeparator(), "\n").equals(sRep))) {
                 this.log.print(out);
-                this.log.flush();
 
+                // quit-cmd has to be written
+                in.setExpecting(true);
+                count++;
                 newLineAllowed = true;
+            } else {
+                System.err.println(TestSuite.ERR_PREF + "\nexpected: " + sRep + "\nactual: " + out);
+                newLineAllowed = false;
             }
         } else {
-            if (count < expectations.size()) {
-                String sRep = expectations.get(count).toString();
-
-                // Get options
-                boolean ignoreEquals = false;
-                while (sRep.startsWith("!")) {
-                    sRep = sRep.replaceFirst("!", "");
-                    // Ignore case
-                    if (sRep.startsWith("C")) {
-                        sRep = sRep.replaceFirst("C", "");
-                        ignoreEquals = sRep.equalsIgnoreCase(out);
-                    }
-                }
-                if ((sRep.equals(out) || ignoreEquals) || (sRep.equals("00err") && out.startsWith("Error"))) {
-                    this.log.print(out);
-                    this.log.flush();
-
-                    // quit-cmd has to be written
-                    in.setExpecting(true);
-                    count++;
-                    newLineAllowed = true;
-                } else {
-                    System.err.println(TestSuite.ERR_PREF + "\nexpected: " + sRep + "\nactual: " + out);
-                }
-            } else {
-                System.err.println(TestSuite.ERR_PREF + "End of output reached!");
-            }
+            System.err.println(TestSuite.ERR_PREF + "Unexpected output");
+            newLineAllowed = false;
         }
+    }
+
+    @Override
+    public void close() throws IOException {
+        super.close();
+        this.log.close();
     }
 }

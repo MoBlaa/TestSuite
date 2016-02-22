@@ -1,4 +1,4 @@
-<"src\edu\kit\informatik\tests\test.graph">
+<"tests\test.graph">
 #init
 #Errors
 00err : "remove "
@@ -11,5 +11,6 @@
 "OK" : "remove d;aa"
 "OK" : "remove aa;c"
 "OK" : "remove aa;bb"
+
 "
 " : "info"

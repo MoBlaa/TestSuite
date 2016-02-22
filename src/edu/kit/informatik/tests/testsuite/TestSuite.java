@@ -1,5 +1,7 @@
 package edu.kit.informatik.tests.testsuite;
 
+import edu.kit.informatik.Terminal;
+
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
@@ -11,7 +13,9 @@ import java.util.LinkedHashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.Properties;
 import java.util.Scanner;
+import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -40,18 +44,10 @@ public final class TestSuite {
      */
     public static final String DEF_PREF = "Test: ";
 
-    /**
-     * Relative directory path to test sources. Located in the project root,
-     * because test sources shouldn't be located inside the src-Folder.
-     */
-    public static final String LOAD_DIRECTORY = "E:\\Google Drive\\Eclipse\\workspace\\Final01\\tests";
-    /**
-     * Class to test.
-     */
-    public static final String LOAD_CLASS = "Main";
     private static final String PARAM_REGEX = "(!C)?";
-    private static final String LINE_REGEX = PARAM_REGEX + "(\\s)*"
-            + "(null|00err|true|false|\"[\\w\\s]+\"|-?[\\d]+|-?[\\d]+\\.[\\d]+)\\s:\\s\"([\\w\\s;]+)\"";
+
+    private static final String LINE_REGEX
+            = PARAM_REGEX + "(null|00err|true|false|\"[\\w\\s]*\"|-?[\\d]+|-?[\\d]+\\.[\\d]+)\\s:\\s\"([\\w\\s;]+)\"";
     private static final String CMD_LINE_ARGS_REGEX = "\"[\\w\\\\/:_\\-\\.]+\"(;\"[\\w\\\\/:_\\-\\.]+\")*";
 
     private static final String CMD_LINE_ARGS = "$CMD_LINE_ARGS$";
@@ -59,7 +55,7 @@ public final class TestSuite {
     private static ExpectionInputStream sysIn;
     private static ExpectionOutputStream sysOut;
 
-    private static File logFile;
+    private static final ConcurrentLinkedQueue<Thread> THREAD_QUEUE = new ConcurrentLinkedQueue<>();
 
     private TestSuite() {
     }
@@ -68,93 +64,91 @@ public final class TestSuite {
      * Test main to perform the tests located at $ProjectRoot/tests and named
      * *.test.
      *
-     * @param args
-     *            Command line arguments.
+     * @param args Command line arguments.
      */
     public static void main(final String... args) {
         // Init
         final Scanner scan = new Scanner(System.in);
 
-        File file = new File(LOAD_DIRECTORY);
-        {
-            while (!file.exists() || !file.isDirectory()) {
-                System.out.print("Path to test-Directory: ");
-
-                file = new File(scan.nextLine());
-
-                if (file.exists() && file.isDirectory()) {
-                    break;
-                } else {
-                    System.err.println(ERR_PREF + "Given path doesn't exist or is not a directory!");
+        Properties prop = new Properties();
+        try {
+            prop.load(TestSuite.class.getResourceAsStream("TestSuite.config"));
+        } catch (IOException e) {
+            System.err.println(ERR_PREF + "Failed to read config file!");
+        }
+        if (!prop.isEmpty()) {
+            File testsDir = null;
+            if (prop.containsKey("TestSources"))
+                testsDir = new File(prop.getProperty("TestSources"));
+            while (testsDir == null || !testsDir.exists()) {
+                System.out.print("Path to tests directory: ");
+                String input = scan.nextLine();
+                testsDir = new File(input);
+                if (!testsDir.exists()) {
+                    System.err.println(ERR_PREF + "Not a valid directory!");
+                    testsDir = null;
                 }
             }
-        }
-        Class<?> cl = null;
-        {
-            String sClassName = LOAD_CLASS;
-            while (cl == null) {
-                if (sClassName.equals("")) {
-                    System.out.print("Name of Test-class inside same package: ");
-                    sClassName = scan.nextLine();
-                }
+            final File[] files = testsDir.listFiles((dir, name) -> name.endsWith(".test"));
+            if (files == null || files.length == 0) {
+                System.err.println(ERR_PREF + "Tests directory doesn't contain .test-Files!");
+                System.exit(-1);
+            }
+
+            final File logDir = new File(testsDir.getPath() + "/logs/");
+            if (!logDir.exists())
+                if (!logDir.mkdir())
+                    System.err.println(ERR_PREF + "Failed to create log-directory.");
+
+            Class<?> cl = null;
+            String className = null;
+            if (prop.containsKey("TestClass"))
+                className = prop.getProperty("TestClass");
+            while (className == null || cl == null) {
                 try {
-                    cl = TestSuite.class.getClassLoader().loadClass("edu.kit.informatik." + sClassName);
-                    if (cl == null) {
-                        System.exit(-2);
-                    } else if (cl.getMethod("main", String[].class) != null) {
-                        break;
-                    }
-                } catch (final ClassNotFoundException e) {
-                    System.err.println(ERR_PREF + "Class " + sClassName + " doesn't exist in this package!");
+                    cl = Terminal.class.getClassLoader().loadClass("edu.kit.informatik." + className);
+                    continue;
+                } catch (ClassNotFoundException e) {
+                    System.err.println(ERR_PREF + e.getMessage());
                     cl = null;
-                    sClassName = "";
-                } catch (final NoSuchMethodException ex) {
-                    System.err.println(ERR_PREF + "Class " + sClassName + " doesn't have a static main function or "
-                            + "default contructor!");
-                    cl = null;
-                    sClassName = "";
-                } catch (final NoClassDefFoundError exx) {
-                    System.err.println(ERR_PREF + exx.getMessage());
-                    cl = null;
-                    sClassName = "";
                 }
+                System.out.print("Name of testing class: ");
+                className = scan.nextLine();
             }
-        }
 
-        final File logDir = new File(file.getAbsolutePath() + "/logs/");
-        logDir.mkdir();
-
-        final File[] files = file.listFiles((dir, name) -> name.endsWith(".test"));
-        if (files != null && files.length > 0) {
             for (final File f : files) {
-                System.out.println(DEF_PREF + "## file: " + f.getName());
                 final String[] fileLines = readTestFile(f.getPath());
                 if (fileLines != null) {
-                    final Map<String, ?> cas = convert(fileLines);
-
                     final File logFile = new File(
                             logDir.getAbsoluteFile() + "/" + f.getName().replace(".test", "Test.log"));
 
-                    testFile(cl, cas, logFile);
-                } else {
+                    final Class<?> inst = cl;
+                    Thread prev = new Thread(() -> {
+                        System.out.println(DEF_PREF + "## file: " + f.getName());
+
+                        testFile(inst, convert(fileLines), logFile);
+                        if (!THREAD_QUEUE.isEmpty())
+                            THREAD_QUEUE.poll().start();
+                    });
+                    prev.setDaemon(false);
+                    THREAD_QUEUE.add(prev);
+                } else
                     System.err.println(ERR_PREF + "Bad formatted file: " + f.getName());
-                }
             }
-            System.exit(1);
-        } else {
-            System.err.println(ERR_PREF + "Directory \"" + file.getAbsolutePath() + "\" doesn't contain test files!");
-        }
+            if (!THREAD_QUEUE.isEmpty())
+                THREAD_QUEUE.poll().start();
+            else
+                System.exit(-2);
+        } else
+            System.err.println(ERR_PREF + "No configs were found!");
     }
 
     /**
      * Performs the tests one file is representing.
      *
-     * @param testClass
-     *            Class to be tested.
-     * @param cas
-     *            Assertions with in and output expected.
-     * @param logFile
-     *            File to store the output of this test.
+     * @param testClass Class to be tested.
+     * @param cas       Assertions with in and output expected.
+     * @param logFile   File to store the output of this test.
      */
     public static void testFile(final Class<?> testClass, final Map<String, ?> cas, final File logFile) {
         if (!cas.isEmpty()) {
@@ -189,8 +183,14 @@ public final class TestSuite {
             System.err.println(ERR_PREF + "Expected input!");
         } else {
             System.setOut(sysOut.getNextStream());
-            sysOut = null;
-            sysIn = null;
+            try {
+                sysOut.close();
+                sysOut = null;
+                sysIn.close();
+                sysIn = null;
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
         }
     }
 
@@ -210,7 +210,6 @@ public final class TestSuite {
 
         try {
             sysIn.connect(sysOut);
-            sysIn.setExpecting(true);
         } catch (final IOException e) {
             System.err.println(ERR_PREF + e.getMessage());
             System.exit(-1);
@@ -238,13 +237,13 @@ public final class TestSuite {
                         String nLine = reader.readLine();
                         if (nLine != null) {
                             // if output is multiple lines long
-                            if (nLine.matches(PARAM_REGEX + "\"[\\w\\s]+") && reader.ready()) {
+                            if (nLine.matches("\"[\\w\\s]*") && reader.ready()) {
                                 String next;
                                 boolean cont = true;
                                 while (cont) {
                                     next = reader.readLine();
                                     nLine += "\n" + next;
-                                    if (next.matches("[\\w\\s]+\"\\s:\\s\"[\\w\\s;]+\"")) {
+                                    if (next.matches("[\\w\\s]*\"\\s:\\s\"[\\w\\s;]+\"")) {
                                         cont = false;
                                     } else if (!reader.ready()) {
                                         nLine = "";
@@ -252,7 +251,6 @@ public final class TestSuite {
                                     }
                                 }
                             }
-                            nLine = nLine.replace(System.lineSeparator(), "\\n");
                             if (nLine.matches(LINE_REGEX)) {
                                 list.add(nLine);
                             } else if (nLine.matches("<" + CMD_LINE_ARGS_REGEX + ">")) {
@@ -287,13 +285,20 @@ public final class TestSuite {
             for (final String line : lines) {
                 if (line != null) {
                     if (line.matches(CMD_LINE_ARGS_REGEX)) {
-                        cases.put(CMD_LINE_ARGS, line.replace("\"", "").split(";"));
+                        String cmdLineArgs = line.replace("\"", "");
+                        String[] splited = cmdLineArgs.split(";");
+                        cases.put(CMD_LINE_ARGS, splited);
                     } else {
                         final Pattern pat = Pattern.compile(LINE_REGEX);
                         final Matcher match = pat.matcher(line);
-                        if (match.matches() && match.groupCount() == 2) {
-                            final String expected = match.group(1);
-                            final String input = match.group(2);
+                        if (match.matches() && (match.groupCount() == 2 || match.groupCount() == 3)) {
+                            /*
+                            group(1) == Parameters
+                            group(2) == expected output
+                            group(3) == input
+                             */
+                            final String expected = match.group(2);
+                            final String input = match.group(3);
 
                             cases.put(input, expected.replace("\"", ""));
                         }

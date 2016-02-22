@@ -29,6 +29,7 @@ public class ExpectionInputStream extends PipedInputStream {
         super();
         inputs = ins;
         count = 0;
+        expecting = true;
     }
 
     /**
