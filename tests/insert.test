@@ -1,4 +1,4 @@
-<"src\edu\kit\informatik\tests\test.graph">
+<"tests\test.graph">
 #Errors
 00err : "insert "
 00err : "insert null"

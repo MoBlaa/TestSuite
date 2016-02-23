@@ -9,10 +9,8 @@ import java.io.IOException;
 import java.io.PrintStream;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
-import java.util.LinkedHashMap;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.Map;
 import java.util.Properties;
 import java.util.Scanner;
 import java.util.concurrent.ConcurrentLinkedQueue;
@@ -68,9 +66,7 @@ public final class TestSuite {
      * @param args Command line arguments.
      */
     public static void main(final String... args) {
-        // Init
         final Scanner scan = new Scanner(System.in);
-
         Properties prop = new Properties();
         try {
             prop.load(TestSuite.class.getResourceAsStream("TestSuite.config"));
@@ -118,16 +114,20 @@ public final class TestSuite {
             }
 
             for (final File f : files) {
-                final String[] fileLines = readTestFile(f.getPath());
+                final Class<?> clazz = cl;
+                final List<String> fileLines = readTestFile(f.getPath());
                 if (fileLines != null) {
-                    final File logFile = new File(
-                            logDir.getAbsoluteFile() + "/" + f.getName().replace(".test", "Test.log"));
-
-                    final Class<?> inst = cl;
                     Thread prev = new Thread(() -> {
+                        final File logFile = new File(
+                                logDir.getAbsoluteFile() + "/" + f.getName().replace(".test", "Test.log"));
                         System.out.println(DEF_PREF + "## file: " + f.getName());
 
-                        testFile(inst, convert(fileLines), logFile);
+                        List<String> inputs = new LinkedList<>();
+                        List<String> expectations = new LinkedList<>();
+
+                        convert(fileLines, inputs, expectations);
+
+                        testFile(clazz, inputs, expectations, logFile);
                         if (!THREAD_QUEUE.isEmpty())
                             THREAD_QUEUE.poll().start();
                     });
@@ -147,23 +147,27 @@ public final class TestSuite {
     /**
      * Performs the tests one file is representing.
      *
-     * @param testClass Class to be tested.
-     * @param cas       Assertions with in and output expected.
-     * @param logFile   File to store the output of this test.
+     * @param testClass    Class to be tested.
+     * @param inputs       Inputs with Command line args.
+     * @param expectations Expected outputs.
+     * @param logFile      File to store the output of this test.
      */
-    public static void testFile(final Class<?> testClass, final Map<String, ?> cas, final File logFile) {
-        if (!cas.isEmpty()) {
+    public static void testFile(final Class<?> testClass, final List<String> inputs,
+                                final List<String> expectations, final File logFile) {
+        if (inputs != null && expectations != null && !inputs.isEmpty() && !expectations.isEmpty()) {
             try {
                 final Method main = testClass.getMethod("main", String[].class);
 
-                Object arguments = null;
-                if (cas.containsKey(CMD_LINE_ARGS)) {
-                    arguments = cas.get(CMD_LINE_ARGS);
-                    cas.remove(CMD_LINE_ARGS);
-                }
-                initInOutput(cas, logFile);
+                String[] arguments = null;
+                if (inputs.get(0).startsWith(CMD_LINE_ARGS)) {
+                    String cmdLineArgs = inputs.get(0).replace(CMD_LINE_ARGS, "");
 
-                main.invoke(null, arguments);
+                    arguments = cmdLineArgs.split(";");
+                    inputs.remove(0);
+                }
+                initInOutput(inputs, expectations, logFile);
+
+                main.invoke(null, (Object) arguments);
 
                 resetInOutputSettings();
             } catch (NoSuchMethodException | InvocationTargetException | IllegalAccessException | IOException e) {
@@ -195,18 +199,10 @@ public final class TestSuite {
         }
     }
 
-    private static <E> void initInOutput(final Map<String, E> map, final File logFile) throws IOException {
-        final List<E> expected = new LinkedList<>();
-        final List<String> inputs = new LinkedList<>();
-
-        map.keySet().stream().filter(input -> input != null).forEach(input -> {
-            inputs.add(input);
-            if (map.get(input) != null) {
-                expected.add(map.get(input));
-            }
-        });
-
-        TestSuite.sysOut = new ExpectionOutputStream(expected, System.out, logFile);
+    private static <E> void initInOutput(final List<String> inputs,
+                                         final List<String> expectations,
+                                         final File logFile) throws IOException {
+        TestSuite.sysOut = new ExpectionOutputStream(expectations, System.out, logFile);
         TestSuite.sysIn = new ExpectionInputStream(inputs);
 
         try {
@@ -221,8 +217,8 @@ public final class TestSuite {
         System.setIn(TestSuite.sysIn);
     }
 
-    private static String[] readTestFile(final String path) {
-        String[] lines = null;
+    private static List<String> readTestFile(final String path) {
+        List<String> lines = null;
         if (path != null) {
             File testFile;
             if (path.matches("[\\w]+")) {
@@ -233,7 +229,7 @@ public final class TestSuite {
             if (testFile.exists()) {
                 try {
                     final BufferedReader reader = new BufferedReader(new FileReader(testFile));
-                    List<String> list = new LinkedList<>();
+                    lines = new LinkedList<>();
                     while (reader.ready()) {
                         String nLine = reader.readLine();
                         if (nLine != null) {
@@ -253,23 +249,20 @@ public final class TestSuite {
                                 }
                             }
                             if (nLine.matches(LINE_REGEX)) {
-                                list.add(nLine);
+                                lines.add(nLine);
                             } else if (nLine.matches("<" + CMD_LINE_ARGS_REGEX + ">")) {
-                                if (list.size() == 0) {
+                                if (lines.size() == 0) {
                                     final String args = nLine.replace("<", "").replace(">", "");
-                                    list.add(args);
+                                    lines.add(args);
                                 } else {
-                                    list = null;
+                                    lines = null;
                                     break;
                                 }
                             } else if (!nLine.matches("#.*") && !nLine.isEmpty()) {
-                                list = null;
+                                lines = null;
                                 break;
                             }
                         }
-                    }
-                    if (list != null) {
-                        lines = list.toArray(new String[list.size()]);
                     }
                 } catch (final IOException e) {
                     System.err.println(ERR_PREF + "Something went wrong while reading test File: " + e.getMessage());
@@ -279,36 +272,32 @@ public final class TestSuite {
         return lines;
     }
 
-    private static Map<String, ?> convert(final String[] lines) {
-        Map<String, Object> cases = null;
+    private static void convert(final List<String> lines,
+                                final List<String> inputs, final List<String> expections) {
         if (lines != null) {
-            cases = new LinkedHashMap<>();
+            //Problem with same command
             for (final String line : lines) {
                 if (line != null) {
                     if (line.matches(CMD_LINE_ARGS_REGEX)) {
                         String cmdLineArgs = line.replace("\"", "");
-                        String[] splited = cmdLineArgs.split(";");
-                        cases.put(CMD_LINE_ARGS, splited);
+                        inputs.add(CMD_LINE_ARGS + cmdLineArgs);
                     } else {
                         final Pattern pat = Pattern.compile(LINE_REGEX);
                         final Matcher match = pat.matcher(line);
                         if (match.matches() && (match.groupCount() == 2 || match.groupCount() == 3)) {
                             /*
                             group(1) == expected output
-                            group(2) == input
+                            group() == input
                              */
-                            final String expected = match.group(1);
+                            final String expected = match.group(1).replace("\"", "");
                             final String input = match.group(2);
 
-                            cases.put(input, expected.replace("\"", ""));
+                            expections.add(expected);
+                            inputs.add(input);
                         }
                     }
                 }
             }
-            if (cases.size() == 0) {
-                cases = null;
-            }
         }
-        return cases;
     }
 }

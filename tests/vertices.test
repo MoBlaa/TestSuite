@@ -1,0 +1,21 @@
+<"tests\test.graph">
+#Errors
+00err : "vertices null"
+00err : "vertices 10"
+
+#Standard
+"Aa
+bB
+C
+d" : "vertices"
+
+#Remove till empty
+"OK" : "remove C;bB"
+"OK" : "remove C;d"
+"OK" : "remove Aa;d"
+"OK" : "remove Aa;bB"
+"OK" : "remove Aa;C"
+
+#Empty output
+"
+" : "vertices"
