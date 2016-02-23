@@ -4,6 +4,7 @@ import edu.kit.informatik.Terminal;
 
 import java.io.BufferedReader;
 import java.io.File;
+import java.io.FileOutputStream;
 import java.io.FileReader;
 import java.io.IOException;
 import java.io.PrintStream;
@@ -56,6 +57,10 @@ public final class TestSuite {
 
     private static final ConcurrentLinkedQueue<Thread> THREAD_QUEUE = new ConcurrentLinkedQueue<>();
 
+    private static File[] files;
+    private static Class<?> cl;
+    private static File logDir;
+
     private TestSuite() {
     }
 
@@ -66,82 +71,92 @@ public final class TestSuite {
      * @param args Command line arguments.
      */
     public static void main(final String... args) {
+        init();
+        for (final File f : files) {
+            final Class<?> clazz = cl;
+            final List<String> fileLines = readTestFile(f.getPath());
+            if (fileLines != null) {
+                Thread prev = new Thread(() -> {
+                    final File logFile = new File(
+                            logDir.getAbsoluteFile() + "/" + f.getName().replace(".test", "Test.log"));
+                    System.out.println(DEF_PREF + "## file: " + f.getName());
+
+                    List<String> inputs = new LinkedList<>();
+                    List<String> expectations = new LinkedList<>();
+
+                    convert(fileLines, inputs, expectations);
+
+                    testFile(clazz, inputs, expectations, logFile);
+                    if (!THREAD_QUEUE.isEmpty())
+                        THREAD_QUEUE.poll().start();
+                });
+                prev.setDaemon(false);
+                THREAD_QUEUE.add(prev);
+            } else
+                System.err.println(ERR_PREF + "Bad formatted file: " + f.getName());
+        }
+        if (!THREAD_QUEUE.isEmpty())
+            THREAD_QUEUE.poll().start();
+        else
+            System.exit(-2);
+    }
+
+    private static void init() {
         final Scanner scan = new Scanner(System.in);
         Properties prop = new Properties();
         try {
-            prop.load(TestSuite.class.getResourceAsStream("TestSuite.config"));
-        } catch (IOException e) {
-            System.err.println(ERR_PREF + "Failed to read config file!");
+            prop.load(new FileReader("TestSuite.config"));
+        } catch (IOException ignored) { }
+        File testsDir = null;
+        if (prop.containsKey("TestSources"))
+            testsDir = new File(prop.getProperty("TestSources"));
+        while (testsDir == null || !testsDir.exists()) {
+            System.out.print("Path to tests directory: ");
+            String input = scan.nextLine();
+            testsDir = new File(input);
+            if (!testsDir.exists()) {
+                System.err.println(ERR_PREF + "Not a valid directory!");
+                testsDir = null;
+            } else {
+                prop.setProperty("TestSources", testsDir.getPath());
+            }
         }
-        if (!prop.isEmpty()) {
-            File testsDir = null;
-            if (prop.containsKey("TestSources"))
-                testsDir = new File(prop.getProperty("TestSources"));
-            while (testsDir == null || !testsDir.exists()) {
-                System.out.print("Path to tests directory: ");
-                String input = scan.nextLine();
-                testsDir = new File(input);
-                if (!testsDir.exists()) {
-                    System.err.println(ERR_PREF + "Not a valid directory!");
-                    testsDir = null;
-                }
-            }
-            final File[] files = testsDir.listFiles((dir, name) -> name.endsWith(".test"));
-            if (files == null || files.length == 0) {
-                System.err.println(ERR_PREF + "Tests directory doesn't contain .test-Files!");
-                System.exit(-1);
-            }
-
-            final File logDir = new File(testsDir.getPath() + "/logs/");
-            if (!logDir.exists())
-                if (!logDir.mkdir())
-                    System.err.println(ERR_PREF + "Failed to create log-directory.");
-
-            Class<?> cl = null;
-            String className = null;
-            if (prop.containsKey("TestClass"))
+        files = testsDir.listFiles((dir, name) -> name.endsWith(".test"));
+        if (files == null || files.length == 0) {
+            System.err.println(ERR_PREF + "Tests directory doesn't contain .test-Files!");
+            System.exit(-1);
+        }
+        logDir = new File(testsDir.getPath() + "/logs/");
+        if (!logDir.exists())
+            if (!logDir.mkdir())
+                System.err.println(ERR_PREF + "Failed to create log-directory.");
+        cl = null;
+        String className;
+        if (prop.containsKey("TestClass")) {
+            try {
                 className = prop.getProperty("TestClass");
-            while (className == null || cl == null) {
-                try {
-                    cl = Terminal.class.getClassLoader().loadClass("edu.kit.informatik." + className);
-                    continue;
-                } catch (ClassNotFoundException e) {
-                    System.err.println(ERR_PREF + e.getMessage());
-                    cl = null;
-                }
+                cl = Terminal.class.getClassLoader().loadClass("edu.kit.informatik." + className);
+            } catch (ClassNotFoundException e) {
+                e.printStackTrace();
+                cl = null;
+            }
+        }
+        while (cl == null) {
+            try {
                 System.out.print("Name of testing class: ");
                 className = scan.nextLine();
+                cl = Terminal.class.getClassLoader().loadClass("edu.kit.informatik." + className);
+                prop.setProperty("TestClass", className);
+            } catch (ClassNotFoundException e) {
+                System.err.println(ERR_PREF + e.getMessage());
+                cl = null;
             }
-
-            for (final File f : files) {
-                final Class<?> clazz = cl;
-                final List<String> fileLines = readTestFile(f.getPath());
-                if (fileLines != null) {
-                    Thread prev = new Thread(() -> {
-                        final File logFile = new File(
-                                logDir.getAbsoluteFile() + "/" + f.getName().replace(".test", "Test.log"));
-                        System.out.println(DEF_PREF + "## file: " + f.getName());
-
-                        List<String> inputs = new LinkedList<>();
-                        List<String> expectations = new LinkedList<>();
-
-                        convert(fileLines, inputs, expectations);
-
-                        testFile(clazz, inputs, expectations, logFile);
-                        if (!THREAD_QUEUE.isEmpty())
-                            THREAD_QUEUE.poll().start();
-                    });
-                    prev.setDaemon(false);
-                    THREAD_QUEUE.add(prev);
-                } else
-                    System.err.println(ERR_PREF + "Bad formatted file: " + f.getName());
-            }
-            if (!THREAD_QUEUE.isEmpty())
-                THREAD_QUEUE.poll().start();
-            else
-                System.exit(-2);
-        } else
-            System.err.println(ERR_PREF + "No configs were found!");
+        }
+        try {
+            prop.store(new FileOutputStream("TestSuite.config"), "TestSuite runtime config");
+        } catch (IOException e) {
+            System.err.println(ERR_PREF + "Failed storing properties!");
+        }
     }
 
     /**
