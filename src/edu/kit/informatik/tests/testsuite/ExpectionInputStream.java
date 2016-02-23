@@ -84,6 +84,7 @@ public class ExpectionInputStream extends PipedInputStream {
                 expecting = false;
             } else {
                 System.err.println(TestSuite.ERR_PREF + "End of expectations reached!");
+                System.exit(-2);
             }
         } else {
             if (this.out.isExpecting()) {
@@ -91,9 +92,9 @@ public class ExpectionInputStream extends PipedInputStream {
                         TestSuite.ERR_PREF + "Expecting " + (this.out.getExpectationSize() - this.out.getCount())
                                 + " more outputs but got call to read!");
             } else {
-                System.err.println(TestSuite.ERR_PREF + "Reading while not expected!");
+                System.err.println(TestSuite.ERR_PREF + "Reading while not expected; case: " + count);
+                System.exit(-2);
             }
-            System.exit(-1);
         }
         return result;
     }

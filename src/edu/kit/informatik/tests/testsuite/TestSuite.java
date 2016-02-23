@@ -14,7 +14,6 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Properties;
 import java.util.Scanner;
-import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -55,8 +54,6 @@ public final class TestSuite {
     private static ExpectionInputStream sysIn;
     private static ExpectionOutputStream sysOut;
 
-    private static final ConcurrentLinkedQueue<Thread> THREAD_QUEUE = new ConcurrentLinkedQueue<>();
-
     private static File[] files;
     private static Class<?> cl;
     private static File logDir;
@@ -76,29 +73,19 @@ public final class TestSuite {
             final Class<?> clazz = cl;
             final List<String> fileLines = readTestFile(f.getPath());
             if (fileLines != null) {
-                Thread prev = new Thread(() -> {
-                    final File logFile = new File(
-                            logDir.getAbsoluteFile() + "/" + f.getName().replace(".test", "Test.log"));
-                    System.out.println(DEF_PREF + "## file: " + f.getName());
+                final File logFile = new File(
+                        logDir.getAbsoluteFile() + "/" + f.getName().replace(".test", "Test.log"));
+                System.out.println(DEF_PREF + "## file: " + f.getName());
 
-                    List<String> inputs = new LinkedList<>();
-                    List<String> expectations = new LinkedList<>();
+                List<String> inputs = new LinkedList<>();
+                List<String> expectations = new LinkedList<>();
 
-                    convert(fileLines, inputs, expectations);
+                convert(fileLines, inputs, expectations);
 
-                    testFile(clazz, inputs, expectations, logFile);
-                    if (!THREAD_QUEUE.isEmpty())
-                        THREAD_QUEUE.poll().start();
-                });
-                prev.setDaemon(false);
-                THREAD_QUEUE.add(prev);
+                testFile(clazz, inputs, expectations, logFile);
             } else
                 System.err.println(ERR_PREF + "Bad formatted file: " + f.getName());
         }
-        if (!THREAD_QUEUE.isEmpty())
-            THREAD_QUEUE.poll().start();
-        else
-            System.exit(-2);
     }
 
     private static void init() {
@@ -106,7 +93,8 @@ public final class TestSuite {
         Properties prop = new Properties();
         try {
             prop.load(new FileReader("TestSuite.config"));
-        } catch (IOException ignored) { }
+        } catch (IOException ignored) {
+        }
         File testsDir = null;
         if (prop.containsKey("TestSources"))
             testsDir = new File(prop.getProperty("TestSources"));

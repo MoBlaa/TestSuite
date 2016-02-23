@@ -137,10 +137,12 @@ public class ExpectionOutputStream extends PipedOutputStream {
             } else {
                 System.err.println(TestSuite.ERR_PREF + "\nexpected: " + sRep + "\nactual: " + out);
                 newLineAllowed = false;
+                System.exit(-2);
             }
         } else {
-            System.err.println(TestSuite.ERR_PREF + "Unexpected output");
+            System.err.println(TestSuite.ERR_PREF + "Unexpected output at case: " + count);
             newLineAllowed = false;
+            System.exit(-2);
         }
     }
 

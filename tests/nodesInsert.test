@@ -1,4 +1,8 @@
 <"tests\test.graph">
+00err : "nodes ee"
+"d
+bB
+Aa" : "nodes C"
 "OK" : "insert C;ee;2;13"
 "C" : "nodes ee"
 "d
