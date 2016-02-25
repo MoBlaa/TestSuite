@@ -13,7 +13,9 @@ import java.lang.reflect.Method;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Properties;
+import java.util.Queue;
 import java.util.Scanner;
+import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -46,7 +48,7 @@ public final class TestSuite {
 
     private static final String LINE_REGEX
             = "(null|00err|true|false|\"" + PARAM_REGEX
-            + "[\\w\\s]*\"|-?[\\d]+|-?[\\d]+\\.[\\d]+)\\s:\\s\"([\\w\\s;]+)\"";
+            + "[\\w\\s;\\-]*\"|-?[\\d]+|-?[\\d]+\\.[\\d]+)\\s:\\s\"([\\w\\s;]+)\"";
     private static final String CMD_LINE_ARGS_REGEX = "\"[\\w\\\\/:_\\-\\.]+\"(;\"[\\w\\\\/:_\\-\\.]+\")*";
 
     private static final String CMD_LINE_ARGS = "$CMD_LINE_ARGS$";
@@ -57,6 +59,8 @@ public final class TestSuite {
     private static File[] files;
     private static Class<?> cl;
     private static File logDir;
+
+    private static final Queue<Thread> THREAD_QUEUE = new ConcurrentLinkedQueue<>();
 
     private TestSuite() {
     }
@@ -73,19 +77,29 @@ public final class TestSuite {
             final Class<?> clazz = cl;
             final List<String> fileLines = readTestFile(f.getPath());
             if (fileLines != null) {
-                final File logFile = new File(
-                        logDir.getAbsoluteFile() + "/" + f.getName().replace(".test", "Test.log"));
-                System.out.println(DEF_PREF + "## file: " + f.getName());
+                Thread thread = new Thread(() -> {
+                    final File logFile = new File(
+                            logDir.getAbsoluteFile() + "/" + f.getName().replace(".test", "Test.log"));
+                    System.out.println(DEF_PREF + "## file: " + f.getName());
 
-                List<String> inputs = new LinkedList<>();
-                List<String> expectations = new LinkedList<>();
+                    List<String> inputs = new LinkedList<>();
+                    List<String> expectations = new LinkedList<>();
 
-                convert(fileLines, inputs, expectations);
+                    convert(fileLines, inputs, expectations);
 
-                testFile(clazz, inputs, expectations, logFile);
+                    testFile(clazz, inputs, expectations, logFile);
+                    if (!THREAD_QUEUE.isEmpty())
+                        THREAD_QUEUE.poll().start();
+                });
+                thread.setDaemon(false);
+                THREAD_QUEUE.add(thread);
             } else
                 System.err.println(ERR_PREF + "Bad formatted file: " + f.getName());
         }
+        if (!THREAD_QUEUE.isEmpty())
+            THREAD_QUEUE.poll().start();
+        else
+            System.err.println(ERR_PREF + "Threading error: Thread queue is empty!");
     }
 
     private static void init() {
@@ -237,13 +251,13 @@ public final class TestSuite {
                         String nLine = reader.readLine();
                         if (nLine != null) {
                             // if output is multiple lines long
-                            if (nLine.matches("\"[\\w\\s]*") && reader.ready()) {
+                            if (nLine.matches("\"[\\w\\s\\-]*") && reader.ready()) {
                                 String next;
                                 boolean cont = true;
                                 while (cont) {
                                     next = reader.readLine();
                                     nLine += "\n" + next;
-                                    if (next.matches("[\\w\\s]*\"\\s:\\s\"[\\w\\s;]+\"")) {
+                                    if (next.matches("[\\w\\s\\-;]*\"\\s:\\s\"[\\w\\s;]+\"")) {
                                         cont = false;
                                     } else if (!reader.ready()) {
                                         nLine = "";

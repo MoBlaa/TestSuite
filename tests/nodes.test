@@ -4,11 +4,15 @@
 00err : "nodes null"
 00err : "nodes ;;"
 00err : "nodes e"
+00err : "nodes cc"
 
 #Nodes of all
 "d
 C
 bB" : "nodes Aa"
+"d
+C
+bB" : "nodes aa"
 "d
 bB
 Aa" : "nodes C"

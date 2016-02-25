@@ -1,0 +1,80 @@
+<"tests/treeGraph.graph">
+#Init test
+"A
+B
+C
+D
+E
+F
+G
+--
+C;G;20;6
+C;F;4;4
+B;E;300;20
+B;D;100;60
+A;C;100;2
+A;B;2;5" : "info"
+
+#Nodes
+"C
+B" : "nodes A"
+"E
+D
+A" : "nodes B"
+"G
+F
+A" : "nodes C"
+"B" : "nodes D"
+"B" : "nodes E"
+"C" : "nodes F"
+"C" : "nodes G"
+
+#Routes
+#From root
+"A B" : "route A;B;time"
+"A B" : "route A;B;route"
+"A B" : "route A;B;optimal"
+"A B" : "route A;B;all"
+5 : "search A;B;time"
+2 : "search A;B;route"
+29 : "search A;B;optimal"
+
+"A C" : "route A;C;time"
+"A C" : "route A;C;route"
+"A C" : "route A;C;optimal"
+"A C" : "route A;C;all"
+2 : "search A;C;time"
+100 : "search A;C;route"
+10004 : "search A;C;optimal"
+
+"A B D" : "route A;D;time"
+"A B D" : "route A;D;route"
+"A B D" : "route A;D;optimal"
+"A B D" : "route A;D;all"
+65 : "search A;D;time"
+102 : "search A;D;route"
+14629 : "search A;D;optimal"
+
+"A B E" : "route A;E;time"
+"A B E" : "route A;E;route"
+"A B E" : "route A;E;optimal"
+"A B E" : "route A;E;all"
+25 : "search A;E;time"
+302 : "search A;E;route"
+91829 : "search A;E;optimal"
+
+"A C F" : "route A;F;time"
+"A C F" : "route A;F;route"
+"A C F" : "route A;F;optimal"
+"A C F" : "route A;F;all"
+6 : "search A;F;time"
+104 : "search A;F;route"
+10852 : "search A;F;optimal"
+
+"A C G" : "route A;G;time"
+"A C G" : "route A;G;route"
+"A C G" : "route A;G;optimal"
+"A C G" : "route A;G;all"
+8 : "search A;G;time"
+120 : "search A;G;route"
+14464 : "search A;G;optimal"
